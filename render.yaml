@@ -3,7 +3,7 @@ services:
   - type: web
     name: SE401-Design-Pattern-api
     runtime: node
-    buildCommand: npm ci || npm install
+    buildCommand: (mkdir -p node_modules || true) && (node scripts/clean-modules.js || true) && rm -rf node_modules && npm cache clean --force && npm install
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
