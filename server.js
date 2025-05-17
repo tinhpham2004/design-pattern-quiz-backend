@@ -16,9 +16,10 @@ const allowedOrigins = [
   "https://SE401-Design-Pattern.onrender.com", // Render frontend
   process.env.FRONTEND_URL, // Environment variable (for flexibility)
   "https://build-aqaycn8ew-tinhs-projects.vercel.app", // Your current Vercel URL (as a backup)
+  "https://build-aqaycn8ew-tinhs-projects.vercel.app/" // Your current Vercel URL with trailing slash
 ]
   .filter(Boolean)
-  .map((url) => (url.endsWith("/") ? url.slice(0, -1) : url)); // Remove any undefined values and trailing slashes
+  .map((url) => url); // Keep all URLs as is, including with/without trailing slashes
 
 console.log("Allowed CORS origins:", allowedOrigins);
 
@@ -27,8 +28,17 @@ app.use(
     origin: function (origin, callback) {
       // Allow requests with no origin (like mobile apps, curl requests)
       if (!origin) return callback(null, true);
-
-      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      
+      // Try to match with or without trailing slash
+      const originNoSlash = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+      const originWithSlash = origin.endsWith('/') ? origin : `${origin}/`;
+      
+      if (
+        allowedOrigins.includes(origin) || 
+        allowedOrigins.includes(originNoSlash) || 
+        allowedOrigins.includes(originWithSlash) ||
+        origin.includes('vercel.app') // Allow all vercel.app subdomains which might change on deployment
+      ) {
         callback(null, true);
       } else {
         console.log("Blocked by CORS:", origin);
