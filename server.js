@@ -15,7 +15,9 @@ const allowedOrigins = [
   "http://localhost:3000", // Local development
   "https://SE401-Design-Pattern.onrender.com", // Render frontend
   process.env.FRONTEND_URL, // Environment variable (for flexibility)
-].filter(Boolean); // Remove any undefined values
+]
+  .filter(Boolean)
+  .map((url) => (url.endsWith("/") ? url.slice(0, -1) : url)); // Remove any undefined values and trailing slashes
 
 console.log("Allowed CORS origins:", allowedOrigins);
 
@@ -38,7 +40,10 @@ app.use(
 
 // Serve static files from the React app in production
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../build")));
+  // Use either ../build or ./build depending on the deployment structure
+  const buildPath = path.join(__dirname, "../build");
+  console.log("Attempting to serve static files from:", buildPath);
+  app.use(express.static(buildPath));
 }
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -76,9 +81,11 @@ try {
 app.post("/api/get-recommendation", async (req, res) => {
   const { prompt } = req.body;
   console.log("Received prompt:", prompt);
-
   try {
-    console.log("Calling Gemini API with model:", model.modelName);
+    console.log(
+      "Calling Gemini API with model:",
+      model?.modelName || "gemini-1.5-flash"
+    );
     const result = await model.generateContent(prompt);
     console.log("API response received");
 
@@ -102,7 +109,14 @@ app.post("/api/get-recommendation", async (req, res) => {
 // Serve React app for any other routes in production
 if (process.env.NODE_ENV === "production") {
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../build", "index.html"));
+    try {
+      const indexPath = path.join(__dirname, "../build", "index.html");
+      console.log("Attempting to serve index.html from:", indexPath);
+      res.sendFile(indexPath);
+    } catch (err) {
+      console.error("Error serving index.html:", err);
+      res.status(500).send("Error serving application");
+    }
   });
 }
 
