@@ -15,6 +15,7 @@ const allowedOrigins = [
   "http://localhost:3000", // Local development
   "https://SE401-Design-Pattern.onrender.com", // Render frontend
   process.env.FRONTEND_URL, // Environment variable (for flexibility)
+  "https://build-aqaycn8ew-tinhs-projects.vercel.app", // Your current Vercel URL (as a backup)
 ]
   .filter(Boolean)
   .map((url) => (url.endsWith("/") ? url.slice(0, -1) : url)); // Remove any undefined values and trailing slashes
@@ -38,13 +39,8 @@ app.use(
   })
 );
 
-// Serve static files from the React app in production
-if (process.env.NODE_ENV === "production") {
-  // Use either ../build or ./build depending on the deployment structure
-  const buildPath = path.join(__dirname, "../build");
-  console.log("Attempting to serve static files from:", buildPath);
-  app.use(express.static(buildPath));
-}
+// We don't need to serve static files since the frontend is hosted separately on Vercel
+// Just keeping API endpoints
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -106,19 +102,11 @@ app.post("/api/get-recommendation", async (req, res) => {
   }
 });
 
-// Serve React app for any other routes in production
-if (process.env.NODE_ENV === "production") {
-  app.get("*", (req, res) => {
-    try {
-      const indexPath = path.join(__dirname, "../build", "index.html");
-      console.log("Attempting to serve index.html from:", indexPath);
-      res.sendFile(indexPath);
-    } catch (err) {
-      console.error("Error serving index.html:", err);
-      res.status(500).send("Error serving application");
-    }
-  });
-}
+// No need to serve React app routes since frontend is on Vercel
+// If you want to add a health check endpoint:
+app.get("/health", (req, res) => {
+  res.status(200).send("Server is running");
+});
 
 app.listen(port, () => {
   console.log(`Server đang chạy trên port ${port}`);
