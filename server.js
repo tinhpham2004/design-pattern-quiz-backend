@@ -15,8 +15,10 @@ const allowedOrigins = [
   "http://localhost:3000", // Local development
   "https://SE401-Design-Pattern.onrender.com", // Render frontend
   process.env.FRONTEND_URL, // Environment variable (for flexibility)
-  "https://build-aqaycn8ew-tinhs-projects.vercel.app", // Your current Vercel URL (as a backup)
-  "https://build-aqaycn8ew-tinhs-projects.vercel.app/" // Your current Vercel URL with trailing slash
+  "https://build-aqaycn8ew-tinhs-projects.vercel.app", // Previous Vercel URL
+  "https://build-aqaycn8ew-tinhs-projects.vercel.app/", // Previous Vercel URL with trailing slash
+  "https://build-ospfw1o9q-tinhs-projects.vercel.app", // Current Vercel URL
+  "https://build-ospfw1o9q-tinhs-projects.vercel.app/" // Current Vercel URL with trailing slash
 ]
   .filter(Boolean)
   .map((url) => url); // Keep all URLs as is, including with/without trailing slashes
