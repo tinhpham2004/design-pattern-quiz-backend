@@ -59,7 +59,9 @@ const apiKey = process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
   console.error("WARNING: GEMINI_API_KEY is not set in environment variables!");
-  console.error("API calls to Gemini will fail. Please set this in Render dashboard.");
+  console.error(
+    "API calls to Gemini will fail. Please set this in Render dashboard."
+  );
 }
 
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -109,7 +111,8 @@ app.post("/api/get-recommendation", async (req, res) => {
     // and is the most reliable way to get the response text
     const responseText = result.response.text();
     console.log("Response text:", responseText);
-    res.json({ recommendation: responseText });  } catch (error) {
+    res.json({ recommendation: responseText });
+  } catch (error) {
     console.error("Lỗi khi gọi Gemini API:", error);
     console.error("Error details:", error.message);
 
@@ -121,16 +124,18 @@ app.post("/api/get-recommendation", async (req, res) => {
     // Provide a more helpful error message based on the problem
     let errorMessage = "Lỗi khi tạo đề xuất từ AI.";
     if (!process.env.GEMINI_API_KEY) {
-      errorMessage = "Chưa cấu hình API key cho Google Gemini AI. Vui lòng liên hệ quản trị viên.";
+      errorMessage =
+        "Chưa cấu hình API key cho Google Gemini AI. Vui lòng liên hệ quản trị viên.";
     } else if (error.message?.includes("quota")) {
-      errorMessage = "Đã vượt quá giới hạn quota của Google AI API. Vui lòng thử lại sau.";
+      errorMessage =
+        "Đã vượt quá giới hạn quota của Google AI API. Vui lòng thử lại sau.";
     }
 
     res.status(500).json({
       error: errorMessage,
       details: error.message,
       status: error.status || "unknown",
-      missingKey: !process.env.GEMINI_API_KEY
+      missingKey: !process.env.GEMINI_API_KEY,
     });
   }
 });
