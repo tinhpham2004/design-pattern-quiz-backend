@@ -18,7 +18,7 @@ const allowedOrigins = [
   "https://build-aqaycn8ew-tinhs-projects.vercel.app", // Previous Vercel URL
   "https://build-aqaycn8ew-tinhs-projects.vercel.app/", // Previous Vercel URL with trailing slash
   "https://build-ospfw1o9q-tinhs-projects.vercel.app", // Current Vercel URL
-  "https://build-ospfw1o9q-tinhs-projects.vercel.app/" // Current Vercel URL with trailing slash
+  "https://build-ospfw1o9q-tinhs-projects.vercel.app/", // Current Vercel URL with trailing slash
 ]
   .filter(Boolean)
   .map((url) => url); // Keep all URLs as is, including with/without trailing slashes
@@ -30,16 +30,16 @@ app.use(
     origin: function (origin, callback) {
       // Allow requests with no origin (like mobile apps, curl requests)
       if (!origin) return callback(null, true);
-      
+
       // Try to match with or without trailing slash
-      const originNoSlash = origin.endsWith('/') ? origin.slice(0, -1) : origin;
-      const originWithSlash = origin.endsWith('/') ? origin : `${origin}/`;
-      
+      const originNoSlash = origin.endsWith("/") ? origin.slice(0, -1) : origin;
+      const originWithSlash = origin.endsWith("/") ? origin : `${origin}/`;
+
       if (
-        allowedOrigins.includes(origin) || 
-        allowedOrigins.includes(originNoSlash) || 
+        allowedOrigins.includes(origin) ||
+        allowedOrigins.includes(originNoSlash) ||
         allowedOrigins.includes(originWithSlash) ||
-        origin.includes('vercel.app') // Allow all vercel.app subdomains which might change on deployment
+        origin.includes("vercel.app") // Allow all vercel.app subdomains which might change on deployment
       ) {
         callback(null, true);
       } else {
@@ -54,11 +54,19 @@ app.use(
 // We don't need to serve static files since the frontend is hosted separately on Vercel
 // Just keeping API endpoints
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Check if API key is available and use a fallback mechanism for development/testing
+const apiKey = process.env.GEMINI_API_KEY;
+
+if (!apiKey) {
+  console.error("WARNING: GEMINI_API_KEY is not set in environment variables!");
+  console.error("API calls to Gemini will fail. Please set this in Render dashboard.");
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
 
 console.log(
-  "API key (first 4 chars):",
-  process.env.GEMINI_API_KEY?.substring(0, 4) + "..."
+  "API key status:",
+  apiKey ? `Present (first 4 chars: ${apiKey.substring(0, 4)}...)` : "MISSING"
 );
 
 // Using the generation configuration explicitly to address API requirements
@@ -101,15 +109,28 @@ app.post("/api/get-recommendation", async (req, res) => {
     // and is the most reliable way to get the response text
     const responseText = result.response.text();
     console.log("Response text:", responseText);
-    res.json({ recommendation: responseText });
-  } catch (error) {
+    res.json({ recommendation: responseText });  } catch (error) {
     console.error("Lỗi khi gọi Gemini API:", error);
     console.error("Error details:", error.message);
 
+    // Check if the error is related to missing API key
+    if (!process.env.GEMINI_API_KEY) {
+      console.error("API KEY IS MISSING - This is causing the error");
+    }
+
+    // Provide a more helpful error message based on the problem
+    let errorMessage = "Lỗi khi tạo đề xuất từ AI.";
+    if (!process.env.GEMINI_API_KEY) {
+      errorMessage = "Chưa cấu hình API key cho Google Gemini AI. Vui lòng liên hệ quản trị viên.";
+    } else if (error.message?.includes("quota")) {
+      errorMessage = "Đã vượt quá giới hạn quota của Google AI API. Vui lòng thử lại sau.";
+    }
+
     res.status(500).json({
-      error: "Lỗi khi tạo đề xuất từ AI.",
+      error: errorMessage,
       details: error.message,
       status: error.status || "unknown",
+      missingKey: !process.env.GEMINI_API_KEY
     });
   }
 });
